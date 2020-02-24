@@ -84,7 +84,7 @@ const double xsi_II_div = .4;
 //If the following is set to true, other division plane orientation
 //rules will be overwritten to impose L1 and L2 anticlinal division.
 //False will have it follow whatever rules deeper layers follow.
-const bool L1_L2_FORCED_ANTICLINAL_DIV = true;
+//const bool L1_L2_FORCED_ANTICLINAL_DIV = true;
 
 //If the following is set to true, then some of the L1 cells will "wait" for a growth phase to account for some cells growing out of the plane. 
 //FREQUENTLY USED PARAMETER
@@ -92,7 +92,9 @@ const bool L1_L2_FORCED_ANTICLINAL_DIV = true;
 
 //If the following is set to true, nonlinear growth rates are applied. False
 //is linear.
-const bool NONLINEAR_GROWTH = true;
+//const bool NONLINEAR_GROWTH = true;
+const bool NONLINEAR_GROWTH = false;
+
 
 
 //If the following is set to false, then boundary division will not occur. This is also true for the L1 layer.

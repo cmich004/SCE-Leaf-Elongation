@@ -28,21 +28,21 @@ using namespace std;
 
 //FREQUENTLY CHANGED VALUES
 //Flags
-bool OUT_OF_PLANE_GROWTH = true; //./batchGenerator -flag OOP_off
+//bool OUT_OF_PLANE_GROWTH = true; //./batchGenerator -flag OOP_off
 
 //EXPERIMENTAL PARAMTERS
-double OOP_PROBABILITY = 0.5; //Defaults to 0.5
+//double OOP_PROBABILITY = 0.5; //Defaults to 0.5
 int DIV_MECHANISM = 1; //./batchGenerator -par -div <int>
 //1 - Errera, 2 - Chem, 3 - Mech
-double WUS_RAD_CONTRACTION_FACTOR = 1;//./batchGenerator -par -WR <double>
-double CK_RAD_CONTRACTION_FACTOR = 1; //./batchGenerator -par -CKR <double>
+//double WUS_RAD_CONTRACTION_FACTOR = 1;//./batchGenerator -par -WR <double>
+//double CK_RAD_CONTRACTION_FACTOR = 1; //./batchGenerator -par -CKR <double>
 int TENSILE_CALC = 4; //./batchGenerator -par TC <int> 
 int NUM_STEPS_PER_FRAME = 2500;
 int VTK_PER_DATA_POINT = 5;
 int RECENT_DIV_NUM_FRAMES = 10;
-bool CHEMICAL_GD = true; //./batchGenerator -par -Chem_GD <1 or 0>
-bool HILL_PROB = false;  //Needs to be set to true for hill to apply.
-int HILL_N = 1;
+//bool CHEMICAL_GD = true; //./batchGenerator -par -Chem_GD <1 or 0>
+//bool HILL_PROB = false;  //Needs to be set to true for hill to apply.
+//int HILL_N = 1;
 //Must be declared in externs.h
 //For clarity, listed as comments in phys.h
 
@@ -67,31 +67,32 @@ int main(int argc, char* argv[]) {
 	//keep track of time
 	for (int i = 1; i < argc; i++) { 
 		if (!strcmp(argv[i], "-WR")) { 
-			WUS_RAD_CONTRACTION_FACTOR = stod(argv[i+1]);
+			//WUS_RAD_CONTRACTION_FACTOR = stod(argv[i+1]);
 		} else if (!strcmp(argv[i], "-CKR")) { 
-			CK_RAD_CONTRACTION_FACTOR = stod(argv[i+1]);
+			//CK_RAD_CONTRACTION_FACTOR = stod(argv[i+1]);
 		} else if (!strcmp(argv[i], "-div")) { 
-			DIV_MECHANISM = stoi(argv[i+1]);
+			//DIV_MECHANISM = stoi(argv[i+1]);
 		} else if (!strcmp(argv[i], "-TC")) { 
 			TENSILE_CALC = stoi(argv[i+1]);
 		} else if (!strcmp(argv[i], "-OOP_off")) { 
-			OUT_OF_PLANE_GROWTH = false;
+			//OUT_OF_PLANE_GROWTH = false;
 		} else if (!strcmp(argv[i], "-OOP_P")) { 
-			OOP_PROBABILITY = stod(argv[i+1]);
+			//OOP_PROBABILITY = stod(argv[i+1]);
 		} else if (!strcmp(argv[i], "-Chem_GD")) { 
-			CHEMICAL_GD = stoi(argv[i+1]) ? true : false;
-		} else if (!strcmp(argv[i], "-HILL_N")) {
-			HILL_N = stoi(argv[i+1]);
-			HILL_PROB = true;
+			//CHEMICAL_GD = stoi(argv[i+1]) ? true : false;
+		}
+		else if (!strcmp(argv[i], "-HILL_N")) {
+		//	HILL_N = stoi(argv[i+1]);
+		//	HILL_PROB = true;
 		}
 	}
-	if (DIV_MECHANISM == 0) { 
+	/*if (DIV_MECHANISM == 0) { 
 		//cout << "DIV_MECHANISM not set.  Exiting..." << endl;
 		exit(1);
 	} else if (DIV_MECHANISM > 3 || DIV_MECHANISM < 1) { 
 		//cout << "DIV_MECHANISM Input failed. Exiting..." << endl;
 		exit(1);
-	}
+	}*/
 	int start = clock();	
 	std::random_device rd;
 	std::mt19937 gen(rd());
@@ -115,7 +116,7 @@ int main(int argc, char* argv[]) {
 	//.txt file that tells initial
 	//cell configuration 
 	//cout << "before cell file is read in" << endl;
-	string init_tissue = "staggered_generated.txt";
+	string init_tissue = "three_cells.txt";
 	//string init_tissue = "one_cell.txt";
 	//cout << "Read in cell starter" << endl;	
 
@@ -182,7 +183,7 @@ int main(int argc, char* argv[]) {
 	int Ti = 0;
 	int terminal_timer = 0;
 	bool is_terminal = false;
-	while (terminal_timer < 182000) {
+	while (terminal_timer < 10000) {
 		//keep track of simulation runs
 		if (!is_terminal) {
 			if (Ti%1000 == 0) is_terminal = growing_Tissue.terminal_Tissue();
@@ -222,7 +223,7 @@ int main(int argc, char* argv[]) {
 		}
 		//was used previously to help stability of cells
 		//deletes a cell wall node if too close together
-		if(Ti > 10000){
+		if(Ti > 10000) {
 			//if(Ti%1000 == 500){}
 			if (Ti % 1000 == 500) { 
 				//cout << "delete wall" << endl;
@@ -245,7 +246,7 @@ int main(int argc, char* argv[]) {
 		}
 		//adds internal node according to 
 		//individual cell growth rate
-		if (Ti >= 10000){
+		if (Ti >= 10000) {
 			//cout << "cell cycle" << endl;
 			growing_Tissue.update_Cell_Cycle(Ti);
 		}

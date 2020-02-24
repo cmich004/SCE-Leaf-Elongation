@@ -502,45 +502,21 @@ shared_ptr<Cell> Cell::division() {
 	vector<shared_ptr<Wall_Node>> nodes;
 	//cout << "Nodes before " << nodes.size() << endl;
 
-	bool forced_anticlinal = ((this->layer == 1)||(this->layer==2))
-		&& L1_L2_FORCED_ANTICLINAL_DIV;
-
-	if (forced_anticlinal) { 
-		orientation = Coord(0,1);
-		find_nodes_for_div_plane(orientation,nodes,11);
-	} else { 
-		switch (DIV_MECHANISM) { 
-			case 1: 
-				//Errera'r rule
-				Errera_div(nodes);
-				break;
-			case 2:
-				//Chemically Driven Division
-				if(HILL_PROB) { 
-					if(my_tissue->unifRand() < hill_Prob()) {
-						//hill_Prob is the probability of periclinal.
-						orientation = Coord(1,0); //periclinal division
-					} else {
-						//Else anticlinal.
-						orientation = Coord(0,1);
-					}
-				} else { 
-					if((this->get_CYT_concentration() > this->get_WUS_concentration())){
-						orientation = Coord(1,0);
-					} else { 
-						orientation = Coord(0,1);
-					}
-				}
-				find_nodes_for_div_plane(orientation,nodes,11);
-				break;
-			case 3:
-				//Mechanical Division
-				find_nodes_for_div_plane_mechanical(nodes); 
-				break;
-			default:
-				//cout << "DIV_MECH NOT ENTERED. Exiting..." << endl;
-				exit(1);
-		}
+	switch (DIV_MECHANISM) { 
+		case 1: 
+			//Errera'r rule
+			Errera_div(nodes);
+			break;
+		case 2:
+			find_nodes_for_div_plane(orientation,nodes,11);
+			break;
+		case 3:
+			//Mechanical Division
+			find_nodes_for_div_plane_mechanical(nodes); 
+			break;
+		default:
+			//cout << "DIV_MECH NOT ENTERED. Exiting..." << endl;
+			exit(1);
 	}
 
 	my_tissue->update_Divplane_Vector(nodes.at(0)->get_Location() - nodes.at(1)->get_Location(), 
@@ -753,28 +729,16 @@ shared_ptr<Cell> Cell::division() {
 	sister->calc_CK(L1_AVG);
 
 	//Set sister growth rate at random
-	/*
-	if((this->layer == 1)||(this->layer == 2)) {
-		sister->set_growth_direction(Coord(1,0));
-	} else if(rand()% 100 < 30) {
-		sister->set_growth_direction(Coord(0,0));
-	} else {
-		if(rand()% 100 < 36){
-			sister->set_growth_direction(Coord(1,0));
-		} else {
-			sister->set_growth_direction(Coord(0,1));
-		}
-	}
-	*/
 	//Sister updates growth rate based on chemical distribution.
 	this->update_growth_direction();
 	sister->update_growth_direction();
 
+	/*
 	if(my_tissue->unifRand() < OOP_PROBABILITY) { 
 		sister->set_Growing_This_Cycle(false);
 	} else { 
 		sister->set_Growing_This_Cycle(true);
-	}
+	}*/
 
 	this->set_growth_rate(true);
 	sister->set_growth_rate(true);
@@ -841,28 +805,15 @@ shared_ptr<Cell> Cell::division() {
 	//cout << "Finished deleting old cyt nodes" << endl;
 
 	curr_wall = left_Corner;
-	//cout << "Mother angles after: " << endl;
 	do { 
-		//cout << curr_wall->get_Angle() << ", ";
 		curr_wall = curr_wall->get_Left_Neighbor();
 	} while (curr_wall != left_Corner);
-	//cout << endl;
 
 	shared_ptr<Wall_Node> sis_left_Corner = sister->get_Left_Corner();  
 	curr_wall = sis_left_Corner;
-	//cout << "Sister angles after: " << endl;
 	do { 
-		//cout << curr_wall->get_Angle() << ", ";
 		curr_wall = curr_wall->get_Left_Neighbor();
 	} while (curr_wall != sis_left_Corner);
-	//cout << endl;
-
-	if (my_tissue->unifRand() < OOP_PROBABILITY) {  
-		set_Growing_This_Cycle(false);
-	} else { 
-		set_Growing_This_Cycle(true);
-	}
-
 	return sister;
 }
 void Cell::move_cyt_nodes(Coord center_point){

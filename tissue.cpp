@@ -44,6 +44,7 @@ Tissue::Tissue(string filename, mt19937 gen) {
 	int rank;
 	int layer;
 	int boundary;
+	bool elongated;
 	int stem;
 	double radius;
 	Coord center;
@@ -68,11 +69,14 @@ Tissue::Tissue(string filename, mt19937 gen) {
 		else if (temp == "Layer") {
 			ss >> layer;
 		}
-		else if (temp == "Boundary"){
+		else if (temp == "Boundary") {
 			ss >> boundary;
 		}
-		else if(temp == "Stem"){
+		else if(temp == "Stem") {
 			ss >> stem;
+		}
+		else if(temp == "Elongated") { 
+			ss >> elongated;
 		}
 		else if (temp == "End_Cell") {
 			//create new cell with collected data 
@@ -83,7 +87,7 @@ Tissue::Tissue(string filename, mt19937 gen) {
 			} else { 
 				stem = 0;
 			}
-			shared_ptr<Cell> curr= make_shared<Cell>(rank, center, radius, my_tissue, layer,boundary, stem);
+			shared_ptr<Cell> curr = make_shared<Cell>(rank, center, radius, my_tissue, layer,boundary, stem, elongated);
 			//give that cell wall nodes and internal nodes
 			curr->make_nodes(radius);
 			//curr->make_nodes_experimental("experimental_nodes.txt");
@@ -363,12 +367,11 @@ double Tissue::get_normal_number(double mean, double sigma){
 }
 void Tissue::update_Signal(bool initial_update){
 	
-	Coord L1_AVG = this->Compute_L1_AVG();
 	for(int i = 0; i < num_cells; i++){
 		//cout<< "WUS" << endl;
-		cells.at(i)->calc_WUS(L1_AVG);
+		//cells.at(i)->calc_WUS(L1_AVG);
 		//cout << "CK" << endl;
-		cells.at(i)->calc_CK(L1_AVG);
+		//cells.at(i)->calc_CK(L1_AVG);
 		//cout << "GROWTH RATE" << endl;
 		cells.at(i)->set_growth_rate(initial_update);
 		//cout<< "growth rate: " << i << " " << cells.at(i)->get_growth_rate() << endl;
@@ -831,7 +834,7 @@ void Tissue::print_VTK_File(ofstream& ofs, bool cytoplasm) {
 	ofs << endl;
 
 
-
+/*
 	ofs << "POINT_DATA " << num_Points << endl;
 	ofs << "SCALARS WUS float64 " << 1 << endl;
 	ofs << "LOOKUP_TABLE default" << endl;
@@ -849,7 +852,7 @@ void Tissue::print_VTK_File(ofstream& ofs, bool cytoplasm) {
 
 	ofs << endl;
 
-	/*ofs << "Scalars average_pressure float" << endl;
+	ofs << "Scalars average_pressure float" << endl;
 	ofs << "LOOKUP_TABLE default" << endl;
 	for (unsigned int i = 0; i < cells.size(); i++) {
 		//cells.at(i)->print_VTK_Scalars_Average_Pressure(ofs);

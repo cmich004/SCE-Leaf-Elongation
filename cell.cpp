@@ -46,8 +46,6 @@ Cell::Cell(Tissue* tissue) {
 	Cell_Progress = 0;
 	//center calculate in division function
 	//will calculate signals in div function
-	wuschel = 0;
-	cytokinin = 0;
 	//growth_rate assigned in div function
 	//growth direction assigned in division
 	//neighbors assigned in div function
@@ -60,18 +58,19 @@ Cell::Cell(Tissue* tissue) {
 }
 //this constructor is used to initialize first set of cells
 //calls set_growth_rate which detemrines growth rate based on WUS CONC
-Cell::Cell(int rank, Coord center, double radius, Tissue* tiss, int layer, int boundary, int stem)    {
+Cell::Cell(int rank, Coord center, double radius, Tissue* tiss, int layer, int boundary, int stem, bool el) {
 	this->my_tissue = tiss;
 	this->rank = rank;
 	this->layer = layer;
+	this->elongated = el;
 	set_Lineage(rank);
 	recent_div = false;
 	//Determines if this tissue is growing out of plane initially
-	if (my_tissue->unifRand()  < OOP_PROBABILITY) { 
+	/*if (my_tissue->unifRand()  < OOP_PROBABILITY) { 
 		set_Growing_This_Cycle(false);
 	} else { 
 		set_Growing_This_Cycle(true);
-	}
+	}*/
 	//if boundary is equal to one 
 	//then the cell will have higher damping
 	//which is assigned below
@@ -214,7 +213,7 @@ void Cell::make_nodes(double radius){
 		curr_X = cell_center.get_X() + radius*cos(curr_theta);
 		curr_Y = cell_center.get_Y() + radius*sin(curr_theta);
 		location = Coord(curr_X,curr_Y);
-		shared_ptr<Wall_Node> new_node =make_shared<Wall_Node>(location,this_cell);
+		shared_ptr<Wall_Node> new_node = make_shared<Wall_Node>(location,this_cell);
 		currW = new_node;
 		wall_nodes.push_back(currW);
 		num_wall_nodes++;
@@ -249,7 +248,7 @@ void Cell::make_nodes(double radius){
 	//insert cytoplasm nodes
 	//int num_init_cyt_nodes = Init_Num_Cyt_Nodes + Cell_Progress;
 	int num_init_cyt_nodes = floor(
-				calc_Cell_Maturity(is_Growing_This_Cycle()) 
+				calc_Cell_Maturity(true) 
 			);
 	//this->Cell_Progress = num_init_cyt_nodes;
 	double scal_x_offset = 0.8;
@@ -336,38 +335,10 @@ void Cell::reset_Cell_Progress(){
 	this->Cell_Progress = 0;
 	return;
 }
-/*
-void Cell::update_Cell_Progress() {
-	this->Cell_Progress++;
-	return;
-}*/
 void Cell::calc_WUS(Coord L1_AVG) {
-	
-	//new data from eric
-	//CZ ~5 cells wide
-	//layer 1
-	//from 2018 paper
-	double distance = (cell_center-(L1_AVG-Coord(0,14))).length();
-	distance = distance * WUS_RAD_CONTRACTION_FACTOR; 
-	//if(distance < 140*.15){
-	this->wuschel = 84.6*exp(-0.01573*(distance));
-	//}
-	//else {
-	//	this->wuschel = 9.36*exp(0.01573*(-distance/.15+280));
-	//}
 	return;
 }
-void Cell::calc_CK(Coord L1_AVG) {
-	double distance = (cell_center-(L1_AVG-Coord(0,21))).length();
-	distance = distance * CK_RAD_CONTRACTION_FACTOR;
-	if((this->get_Layer() == 1)||(this->get_Layer() == 2)) {
-		this->cytokinin = 0;
-	} else {
-		// if((this->get_Layer() >2) && (this->get_Layer() < 6))
-		this->cytokinin = 110*exp(-0.01637*distance);
-	}
-
-
+void Cell::calc_CK(Coord L1_AVG) { 
 	return;
 }
 void Cell::set_growth_rate(bool first_growth_rate) {
@@ -386,38 +357,13 @@ void Cell::set_growth_rate(bool first_growth_rate) {
 	if (!first_growth_rate) {
 		old_growth_rate = growth_rate;
 	}
-	/*
-
-	if(this->wuschel <55 ) {
-		//cout << "Count 1: " << my_tissue->return_counts(0) << endl;
-		this->growth_rate = this->my_tissue->get_next_random(1,this->my_tissue->return_counts(0));
-		this->my_tissue->set_counts(0);
-	} else if(this->wuschel <65 ) {
-
-		//cout << "Count 2: " << my_tissue->return_counts(1) << endl;	
-		this->growth_rate = this->my_tissue->get_next_random(2,this->my_tissue->return_counts(1));
-		this->my_tissue->set_counts(1);
-	} else if(this->wuschel <75 ) {
-
-		//cout << "Count 3: " << my_tissue->return_counts(2) << endl;
-		this->growth_rate = this->my_tissue->get_next_random(3,this->my_tissue->return_counts(2));
-		this->my_tissue->set_counts(2);
-	} else {
-
-		//cout << "Count 4: " << my_tissue->return_counts(3) << endl;
-		this->growth_rate = this->my_tissue->get_next_random(4,this->my_tissue->return_counts(3));
-		this->my_tissue->set_counts(3);
-	}*/
-
-	//this->growth_rate = my_tissue->unifRandInt(5000,30000);
-	//mt19937 gen = this->get_Tissue()->get_random_generator();
-	if(this->wuschel < 55){
-	  mean = 10800;
-	  sigma = 1800;
-	  this->growth_rate = getRandomDoubleUsingNormalDistribution(mean,sigma);
+	//if(this->wuschel < 55){
+	mean = 10800;
+	sigma = 1800;
+	this->growth_rate = getRandomDoubleUsingNormalDistribution(mean,sigma);
 	//this->growth_rate = my_tissue->unifRandInt(2000,10000);
 	//cout << "growth rate:" << growth_rate << endl;
-	}
+	/*}
 	else if(this->wuschel < 65){
 	mean = 14400;
 	sigma = 1800;
@@ -446,52 +392,7 @@ void Cell::set_growth_rate(bool first_growth_rate) {
 
 	//this->growth_rate = growth_rate*.7;
 	//}
-
-	// TEST
-	//r
-	//this->growth_rate = growth_rate*.7; 
-	//h
-	//this->growth_rate = growth_rate*0.35;
-
-	//this->growth_rate = 5000;
-	//2018 paper	
-	/*if(this->wuschel < 11){
-	  this->growth_rate = my_tissue->unifRandInt(5000,8000);
-	  }
-	  else if((this->wuschel >= 12) &&(this->wuschel <24)) {
-	  this->growth_rate = my_tissue->unifRandInt(8000,10000);
-	  }
-	  else if((this->wuschel >= 24) && (this->wuschel <36)){
-	  this->growth_rate = my_tissue->unifRandInt(10000,12000);
-	  }
-	  else if ((this->wuschel >= 36) && (this->wuschel <48)){
-	  this->growth_rate = my_tissue->unifRandInt(12000,14000);
-	  }
-	  else if ((this->wuschel >= 48) && (this->wuschel < 60)){
-	  this->growth_rate = my_tissue->unifRandInt(14000,16000);
-	  }	
-	  else if ((this->wuschel >= 60) && (this->wuschel <72)){
-	  this->growth_rate = my_tissue->unifRandInt(16000,17000);
-	  }
-	  else if ((this->wuschel >= 72) && (this->wuschel < 84)){
-	  this->growth_rate = my_tissue->unifRandInt(17000,18000);
-	  }
-	  else if ((this->wuschel >= 84) && (this->wuschel < 96)){
-	  this->growth_rate = my_tissue->unifRandInt(18000,20000);
-	  }
-	  else if((this->wuschel >=96)&&(this->wuschel < 108)) {
-	  this->growth_rate = my_tissue->unifRandInt(200000,22000);
-	  }
-	  else if((this->wuschel >=108)&&(this->wuschel < 120)) {
-	  this->growth_rate = my_tissue->unifRandInt(22000,24000);
-	  }
-	  else if((this->wuschel >=120)&&(this->wuschel < 132)) {
-	  this->growth_rate = my_tissue->unifRandInt(24000,27000);
-	  }
-	  else if(this->wuschel>= 132) {
-	  this->growth_rate = my_tissue->unifRandInt(27000,30000);
-	  }*/
-
+	*/
 
 	if(!first_growth_rate) { 
 		rescale_Life_Length(old_growth_rate,false);
@@ -531,57 +432,11 @@ void Cell::rescale_Life_Length(int old_growth_rate, bool init_phase) {
 }
 
 void Cell::update_growth_direction(){
-	//signaling stuff
-	//Isotropic growth if you're not growing this cycle or if
-	//you're in the boundary
-	
-	if (CHEMICAL_GD) { 
-		if (HILL_PROB) { 
-			if(this->stem == 1) { //Stem grows vertically
-				this->growth_direction = Coord(0,1);
-			} else if(this->boundary == 1 || !growing_this_cycle) {
-				this->growth_direction = Coord(0,0);
-			} else if(my_tissue->unifRand() <  hill_Prob()) {
-				//hill_prob is probability of periclinal
-				//growth as a function of CK/WUS
-				this->growth_direction = Coord(0,1);
-			} else { 
-				this->growth_direction = Coord(1,0);
-			}
-		} else { 
-			if(this->boundary == 1 || !growing_this_cycle){
-				this->growth_direction = Coord(0,0);
-			} else if(this->stem == 1) { //Stem grows vertically
-				this->growth_direction = Coord(0,1);
-			} else if((this->layer == 1)||(this->layer == 2)) { //Top layers grow horizontally
-				this->growth_direction = Coord(1,0);
-			} else if(this->wuschel > this->cytokinin) { //Wus > CK means horizontal
-				this->growth_direction = Coord(1,0);
-			} else { //CK > Wus means vertical
-				this->growth_direction = Coord(0,1);
-			}
-		}
-	} else {  
-		if (this->boundary == 1 || !growing_this_cycle) {
-			this->growth_direction = Coord(0,0);
-		} else if(this->stem == 1) {
-			this->growth_direction = Coord(0,1);
-		} else if((this->layer == 1)||(this->layer == 2)) {
-			this->growth_direction = Coord(1,0);
-		} else if(rand()% 100 < 30) {
-			this->growth_direction = Coord(0,0);
-		} else {
-			if(rand()% 100 < 36) {
-				this->growth_direction = Coord(1,0);
-			} else {
-				this->growth_direction = Coord(0,1);
-			}
-		}
-	}
+	this->growth_direction = Coord(0,1);
 	this->update_node_parameters_for_growth_direction();
 	return;
 }
-double Cell::hill_Prob() {
+/*double Cell::hill_Prob() {
 	double lambda = this->cytokinin / this->wuschel;
 	if (HILL_K <= 0) { 
 		cout << "Hill K must be >= 0!" << endl;
@@ -594,7 +449,7 @@ double Cell::hill_Prob() {
 	} else { 
 		return 1.0 / (1.0 + pow(HILL_K / lambda, HILL_N));
 	}
-}
+}*/
 void Cell::update_node_parameters_for_growth_direction(){
 	vector<shared_ptr<Wall_Node>> walls;
 	double k_bend;
@@ -710,14 +565,8 @@ double Cell::compute_k_bend(shared_ptr<Wall_Node> current) {
 			k_bend = K_BEND_LOOSE;
 		}
 	} else {
-		//cout << "elsesssseses" << endl;
 		k_bend = K_BEND_UNIFORM;
 	}
-	//if((layer == 1)||(layer == 2)){
-
-	//	k_bend = K_BEND_UNIFORM;
-	//}
-	//cout << "K bend: " << k_bend << endl;
 	return k_bend;
 }
 double Cell::compute_k_bend_div(shared_ptr<Wall_Node> current) {
@@ -754,7 +603,6 @@ double Cell::compute_k_bend_div(shared_ptr<Wall_Node> current) {
 	} else {
 		k_bend = K_BEND_UNIFORM;
 	}
-	//cout << "K bend: " << k_bend << endl;
 	return k_bend;
 }
 
@@ -1139,7 +987,8 @@ void Cell::update_Cell_Progress(int& Ti) {
 		//static_cast<double>(30*this->growth_rate);
 
 	//if (Cell_Progress > 0.6) //cout << "CELL PROGRESS INCREASING" << endl;
-	bool cross_section_check = this->growing_this_cycle || !OUT_OF_PLANE_GROWTH;
+	//bool cross_section_check = this->growing_this_cycle || !OUT_OF_PLANE_GROWTH;
+	bool cross_section_check = true;
 	double maturity = calc_Cell_Maturity(cross_section_check);
 	double max_maturity = (cross_section_check) ? 31 : 23;
 	if (maturity >= num_cyt_nodes + 1 && maturity < max_maturity) {
@@ -1178,16 +1027,16 @@ void Cell::division_check() {
 	vector<shared_ptr<Cell>> neighbor_curr_adhesions;
 	shared_ptr<Cell> this_cell = shared_from_this();
 	//cout <<"Before div progress" << Cell_Progress << endl;	
-	bool cross_section_check = 
-		this->growing_this_cycle || !OUT_OF_PLANE_GROWTH;
 
 	bool boundary_check = 
 		(this->boundary == 0 && this->stem == 0) || BOUNDARY_DIVISION;
 
 	bool cell_cycle_check = (this->Cell_Progress >= 1); 
 
+	bool elongation_check = this->elongated;
+
 	//Case where the cell divides.
-	if (cross_section_check && boundary_check && cell_cycle_check) { 
+	if (elongation_check && boundary_check && cell_cycle_check) { 
 		my_tissue->update_IP_Divs();
 		my_tissue->update_Divs();
 
@@ -1245,20 +1094,9 @@ void Cell::division_check() {
 		this->clear_adhesion_vectors();
 		this->update_adhesion_springs();	
 		set_Terminal(true);
-	} else if (!cross_section_check && cell_cycle_check && boundary_check) { 
-		my_tissue->update_Divs();
-		//Case where the cell "divides out of plane"
-		this->reset_Cell_Progress();
-		this->reset_Life_Length();
-		if (my_tissue->unifRand() < 0.5) { 
-			set_Growing_This_Cycle(false);
-		} else { 
-			set_Growing_This_Cycle(true);
-		}
-		set_Terminal(true);
-	} else if (cell_cycle_check && !boundary_check) {
-		this->reset_Cell_Progress();
-		this->reset_Life_Length();
+	} else if (!elongation_check && cell_cycle_check) { 
+		//Do nothing, case when 
+		//cell cycle is up but cell is elongating.
 	}
 	return;
 }
@@ -1294,7 +1132,7 @@ double Cell::get_curr_perimeter() {
 	//#pragma omp parallel for reduction(+:curr_perimeter)
 	current = walls.at(0);
 	shared_ptr<Wall_Node> start = current;
-	do{
+	do {
 		left_neighbor = current->get_Left_Neighbor();
 		curr_vec = left_neighbor->get_Location() - current->get_Location();
 		curr_len = curr_vec.length();	
@@ -1308,18 +1146,18 @@ void Cell::set_perimeter(double new_perimeter){
 	this->perimeter = new_perimeter;
 	return;
 }
+/*
 void Cell::set_Growing_This_Cycle(bool gtc) {
 	this->growing_this_cycle = gtc;
 	return;
-}
+}*/
 void Cell::set_Init_Num_Nodes(double inn) { 
 	this->init_Num_Nodes = inn;
 	return;
 }
 void Cell::add_Wall_Node_Check(int Ti) {
-	//cout << "adding a wall node" << endl;
-	//#pragma omp for schedule(static,1)
-	if(this->Cell_Progress < 0.05){
+	//This should definitely be symmetric and based on stress.
+	if(this->Cell_Progress < 0.05) {
 		//do nothing
 	} else {
 		shared_ptr<Wall_Node> lc;
@@ -1331,8 +1169,10 @@ void Cell::add_Wall_Node_Check(int Ti) {
 		//cout << "curr perim " << curr_perim << endl;
 		//cout << "old perim" << this->get_perimeter()<< endl;
 		//cout << "increase" << increase << endl;
+		//
+		//TO DO - Find a better checkpoint than perimeter.
 		this->set_perimeter(curr_perim);
-		if(increase > PERIM_INCREASE){
+		if(increase > PERIM_INCREASE) {
 			add_Wall_Node(Ti);
 		}
 	}
@@ -1368,6 +1208,8 @@ void Cell::delete_Wall_Node_Check(int Ti){
 	} while (repeat);
 	return;
 }
+
+//This needs to be changed to symmetrically add
 void Cell::add_Wall_Node(int Ti) {
 
 	//find node to the right of largest spring
@@ -1807,10 +1649,10 @@ void Cell::print_Cell_Data(ofstream& ofs, int Ti) {
 	ofs << get_Lineage() << " ";
 	ofs << recent_div_MD << " ";
 	ofs << num_Neighbors() << " ";
-	ofs << get_WUS_concentration() << " ";
+	//ofs << get_WUS_concentration() << " ";
 	//get CYT concentration gets CK, 
 	//this is a typo but doesn't change anything
-	ofs << get_CYT_concentration() << " ";
+	//ofs << get_CYT_concentration() << " ";
 	ofs << Ti;
 	ofs << endl;
 
@@ -1955,7 +1797,7 @@ void Cell::print_VTK_Scalars_Average_Pressure(ofstream& ofs, bool cytoplasm) {
   return;
   }*/
 
-void Cell::print_VTK_Scalars_WUS(ofstream& ofs, bool cytoplasm) {
+/*void Cell::print_VTK_Scalars_WUS(ofstream& ofs, bool cytoplasm) {
 
 	double concentration = 0;
 	shared_ptr<Wall_Node> curr_wall = left_Corner;
@@ -1994,7 +1836,7 @@ void Cell::print_VTK_Scalars_CK(ofstream& ofs, bool cytoplasm) {
 		}
 	}
 	return;
-}
+}*/
 /*void Cell::print_VTK_Scalars_WUS_cell(ofstream& ofs, bool cytoplasm) {
   for(unsigned int i = 0; i < 1; i++) {
 
